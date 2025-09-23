@@ -1,8 +1,8 @@
-# Ignore Streamlit config and secrets - Revised 19.09
-#.streamlit/
+# Ignore Streamlit config and secrets 
+.streamlit/
 
-# Jupyter Notebook files
-jupyter/
+# Jupyter Notebook files - Revised 19.09
+#jupyter/
 
 # Ignore specific files
 API_test.py
