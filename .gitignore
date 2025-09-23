@@ -1,5 +1,5 @@
-# Ignore Streamlit config and secrets
-.streamlit/
+# Ignore Streamlit config and secrets - Revised 19.09
+#.streamlit/
 
 # Jupyter Notebook files
 jupyter/
