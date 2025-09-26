@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+import numpy as np
 
 st.set_page_config(
     page_title="Weather Data Plots",
@@ -50,17 +50,42 @@ if selected_column == "All":
 else:
     filtered_data = data[(data["time"].dt.month >= selected_months[0]) & (data["time"].dt.month <= selected_months[1])][["time", selected_column]]
 
+# Group by month instead of day
+monthly_precipitation = (data.groupby(data["time"].dt.to_period("M"))["precipitation (mm)"].sum().reset_index())
+
+# Convert back to timestamp for plotting
+monthly_precipitation["time"] = monthly_precipitation["time"].dt.to_timestamp()
+
+# Rename for clarity
+monthly_precipitation = monthly_precipitation.rename(
+    columns={"time": "month", "precipitation (mm)": "total_precipitation"}
+)
+monthly_precipitation["month"] = monthly_precipitation["month"].dt.strftime("%Y-%m")
+
 
 # Plotting filtered data
 st.write(f"Plot for {selected_column}")
 plt.figure(figsize=(16, 6))
 
-if selected_column == "All":
-    for col in filtered_data.columns:
-        if col != "time":
-            sns.lineplot(data=filtered_data, x="time", y=col, label=col)
+if selected_column == "All": 
+    all_plots = True
 else:
-    sns.lineplot(data=filtered_data, x="time", y=selected_column, color="blue", label=selected_column)
+    all_plots = False
+    
+if all_plots or selected_column == "temperature_2m (°C)":
+    sns.scatterplot(data=filtered_data, x="time", y="temperature_2m (°C)", hue="temperature_2m (°C)", palette="flare", legend=None, alpha=1, label="Hourly Temperature", s=8)
+if all_plots or selected_column == "precipitation (mm)":
+    sns.barplot(data=monthly_precipitation, x="month", y="total_precipitation", color="skyblue_r", hue="total_precipitation")
+elif all_plots or selected_column == "wind_speed_10m (m/s)":
+    sns.lineplot(data=filtered_data, x="time", y="wind_speed_10m (m/s)", color="blue", label="Daily Average Wind Speed")
+elif all_plots or selected_column == "wind_gusts_10m (m/s)":
+    sns.lineplot(data=filtered_data, x="time", y="wind_gusts_10m (m/s)", color="orange", label="Hourly Wind Gusts")
+elif all_plots or selected_column == "wind_direction_10m (°)":
+    angles = np.deg2rad(filtered_data["wind_direction_10m (°)"])
+    ax = plt.subplot(111, polar=True)
+    ax.hist(angles, bins=36, color="blue", alpha=0.75)
+    ax.set_theta_zero_location("N")
+    ax.set_theta_direction(-1)
 
 
 plt.xlabel("Time")
