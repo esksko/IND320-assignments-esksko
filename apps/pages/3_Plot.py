@@ -72,8 +72,6 @@ def plot_all(data, start, end):
     for xi, yi in zip(x, monthly_data["temperature_2m (°C)"]):
         ax1_temp.text(xi, yi + 0.5, f"{yi:.1f} °C", color="red", ha="center", va="bottom", fontsize=9)
 
-    st.dataframe(monthly_data)
-
     # Wind direction polar plot
     angles = np.deg2rad(data["wind_direction_10m (°)"])
     ax2 = plt.subplot(122, polar=True)
@@ -123,22 +121,44 @@ if selected_column == "All":
     filtered_data = data[(data["time"].dt.month >= selected_months[0]) & (data["time"].dt.month <= selected_months[1])]
 else:
     filtered_data = data[(data["time"].dt.month >= selected_months[0]) & (data["time"].dt.month <= selected_months[1])][["time", selected_column]]
-
-
+    
 
 # Plotting filtered data
 st.write(f"Plot for {selected_column}")
 plt.figure(figsize=(16, 6))
 
-
-
-
-
 if selected_column == "All":
     plot_all(filtered_data, selected_months[0], selected_months[1])
-    
-
-
-
+else:
+    plt.title(f"{selected_column} from month {selected_months[0]} to {selected_months[1]}")
+    if selected_column == "temperature_2m (°C)":
+        sns.scatterplot(data=filtered_data, x="time", y="temperature_2m (°C)", hue="temperature_2m (°C)", palette="flare", legend=None, alpha=1, label="Hourly Temperature", s=8)
+        plt.xlabel("Date")
+        plt.ylabel("Temperature (°C)")
+        plt.grid(alpha=0.3)
+    elif selected_column == "precipitation (mm)":
+        # Plotting monthly precipitation as bars
+        monthly_precip = filtered_data.resample("ME", on="time").sum().reset_index()
+        sns.barplot(data=monthly_precip, x="time", y="precipitation (mm)", color="#01386a", label="Monthly Precipitation")
+        plt.xlabel("Date")
+        plt.ylabel("Precipitation (mm)")
+    elif selected_column == "wind_speed_10m (m/s)":
+        monthly_wind_speed = filtered_data.resample("ME", on="time").mean().reset_index()
+        sns.barplot(data=monthly_wind_speed, x="time", y="wind_speed_10m (m/s)", color="#75bbfd")
+        plt.xlabel("Date")
+        plt.ylabel("Wind Speed (m/s)")
+    elif selected_column == "wind_gusts_10m (m/s)":
+        monthly_wind_gusts = filtered_data.resample("ME", on="time").mean().reset_index()
+        sns.barplot(data=monthly_wind_gusts, x="time", y="wind_gusts_10m (m/s)", color="#7af9ab")
+        plt.xlabel("Date")
+        plt.ylabel("Wind Gusts (m/s)")
+    elif selected_column == "wind_direction_10m (°)":
+        angles = np.deg2rad(filtered_data["wind_direction_10m (°)"])
+        ax = plt.subplot(111, polar=True)
+        ax.hist(angles, bins=36, color="#fe4b03", alpha=0.75)
+        ax.set_theta_zero_location("N")
+        ax.set_theta_direction(-1)
+        ax.set_xlabel("Wind Direction (°)")
+        
 st.pyplot(plt)
 
