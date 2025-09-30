@@ -21,7 +21,6 @@ data = load_data()
 first_month = data[data["time"].dt.month == 1]
 
 
-
 # Row-wise table: One row per original column (except "time")
 # This dataframe has two columns, "variable" and "January Data"
 # "variable" contains the original column names (except "time")
