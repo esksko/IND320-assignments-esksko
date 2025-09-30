@@ -84,8 +84,6 @@ def plot_all(data, start, end):
 
 
 
-
-
 st.set_page_config(
     page_title="Plots",
     layout="wide",          # Makes content span the full width
@@ -119,7 +117,6 @@ st.write(f"Showing: {selected_column} for months {selected_months[0]} to {select
 
 
 # Filtering data for the selected months and columns
-
 if selected_column == "All":
     filtered_data = data[(data["time"].dt.month >= selected_months[0]) & (data["time"].dt.month <= selected_months[1])]
 else:
@@ -130,6 +127,7 @@ else:
 st.write(f"Plot for {selected_column}")
 plt.figure(figsize=(16, 6))
 
+# Plot correctly based on selection
 if selected_column == "All":
     plot_all(filtered_data, selected_months[0], selected_months[1])
 else:
@@ -162,6 +160,7 @@ else:
         ax.set_theta_zero_location("N")
         ax.set_theta_direction(-1)
         ax.set_xlabel("Wind Direction (°)")
-        
+    
+# Display the plot in Streamlit
 st.pyplot(plt)
 

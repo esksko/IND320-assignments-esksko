@@ -2,7 +2,8 @@ import streamlit as st
 
 st.title("Assignment 1 - Weather Dashboard")
 
-# Sidebar for navigation
+# Sidebar title for naviagtion
+# Actual sidebar is handled by Streamlit and the "pages" folder
 st.sidebar.title("Navigation")
 
 # Setting browser tab title

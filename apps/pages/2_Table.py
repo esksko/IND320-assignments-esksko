@@ -1,10 +1,13 @@
 import streamlit as st
 import pandas as pd
 
+
 st.title("Table")
 st.sidebar.title("Navigation")
 st.set_page_config(page_title="Table")
 
+
+# Caching data to avoid reloading on every interaction
 @st.cache_data
 def load_data():
     df = pd.read_csv("data/open-meteo-subset.csv")
@@ -13,19 +16,16 @@ def load_data():
 
 # Load data
 data = load_data()
-st.dataframe(data)
 
 # Filter first month (January)
 first_month = data[data["time"].dt.month == 1]
 
-#st.dataframe(first_month)
 
 
-
-#Row-wise table: One row per original column (except "time")
-#This dataframe has two columns, "variable" and "January Data"
-#"variable" contains the original column names (except "time")
-#"January Data" contains the corresponding data for January as lists
+# Row-wise table: One row per original column (except "time")
+# This dataframe has two columns, "variable" and "January Data"
+# "variable" contains the original column names (except "time")
+# "January Data" contains the corresponding data for January as lists
 
 rowwise_df = pd.DataFrame({
     "variable": [col for col in first_month.columns if col != "time"], 
