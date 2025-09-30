@@ -89,7 +89,8 @@ def plot_all(data, start, end):
 st.set_page_config(
     page_title="Weather Data Plots",
     layout="wide",          # Makes content span the full width
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
+    page_title="Plots"
 )
 
 st.title("Plots")

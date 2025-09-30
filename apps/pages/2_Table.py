@@ -3,6 +3,7 @@ import pandas as pd
 
 st.title("Table")
 st.sidebar.title("Navigation")
+st.set_page_config(page_title="Table")
 
 @st.cache_data
 def load_data():
