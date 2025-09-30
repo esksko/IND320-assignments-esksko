@@ -93,6 +93,7 @@ st.set_page_config(
 )
 
 st.title("Plots")
+st.sidebar.title("Navigation")
 
 
 @st.cache_data

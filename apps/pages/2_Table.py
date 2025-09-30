@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 
 st.title("Table")
+st.sidebar.title("Navigation")
 
 @st.cache_data
 def load_data():
