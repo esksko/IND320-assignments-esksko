@@ -4,28 +4,33 @@ from pymongo.server_api import ServerApi
 import pandas as pd
 import matplotlib.pyplot as plt
 
+st.set_page_config(page_title="MongoDB Page", layout="wide", initial_sidebar_state="expanded")
 
 st.title("MongoDB integration")
 st.sidebar.title("Navigation")
-st.set_page_config(page_title="MongoDB Page", layout="wide", initial_sidebar_state="expanded")
 
 
-password = st.secrets["MongoDB"]["pwd"]
-cluster = st.secrets["MongoDB"]["cluster"]
-database = st.secrets["MongoDB"]["database"]
-collection = st.secrets["MongoDB"]["collection"]
+@st.cache_data(ttl=6000)
+def load_data_from_mongo():
+    password = st.secrets["MongoDB"]["pwd"]
+    cluster = st.secrets["MongoDB"]["cluster"]
+    database = st.secrets["MongoDB"]["database"]
+    collection = st.secrets["MongoDB"]["collection"]
 
 
-uri = f"mongodb+srv://esksko:{password}@ind320-esksko.5nbj7x0.mongodb.net/?retryWrites=true&w=majority&appName=IND320-esksko"
-client = MongoClient(uri, server_api=ServerApi("1"))
+    uri = f"mongodb+srv://esksko:{password}@ind320-esksko.5nbj7x0.mongodb.net/?retryWrites=true&w=majority&appName=IND320-esksko"
+    client = MongoClient(uri, server_api=ServerApi("1"))
 
-# Connecting to the MongoDB database and collection
-db = client[database]
-col = db[collection]
+    # Connecting to the MongoDB database and collection
+    db = client[database]
+    col = db[collection]
 
-# Loading all documents from the collection
-data = list(col.find())
-df = pd.DataFrame(data)
+    # Loading all documents from the collection
+    data = list(col.find())
+    df = pd.DataFrame(data)
+    return df
+
+df = load_data_from_mongo()
 
 # Dropping the '_id' column if it exists
 if "_id" in df.columns:
@@ -60,18 +65,22 @@ with right_column:
 
     # Pills for selecting production group
     production_groups = ["hydro", "wind", "solar", "thermal", "other"]
-    selected_group = st.pills("Select Production Group", production_groups, selection_mode="multi")
+    selected_group = st.pills("Select Production Group", production_groups, selection_mode="multi", default=production_groups)
 
     # Selectbox for selecting month
     months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
     selected_month = st.selectbox("Select Month", months)
 
     # Filtering data based on selected production group and month
-    group_data = df[df["productiongroup"].isin(selected_group)]
-    month_data = group_data[group_data["starttime"].dt.month == (months.index(selected_month) + 1)]
-
+    #group_data = df[df["productiongroup"].isin(selected_group)]
+    filtered_data = df[
+        (df["starttime"].dt.month == (months.index(selected_month) + 1)) &
+        (df["pricearea"] == selected_area) &
+        (df["productiongroup"].isin(selected_group))
+        ]
+   
     # This creates a pivot table for better plotting
-    pivot_data = month_data.pivot_table(values="quantitykwh", index="starttime", columns="productiongroup", aggfunc="sum")
+    pivot_data = filtered_data.pivot_table(values="quantitykwh", index="starttime", columns="productiongroup", aggfunc="sum")
 
     # Creating line chart
     plt.figure(figsize=(10, 6))
@@ -80,10 +89,19 @@ with right_column:
     
     plt.xlabel("Time")
     plt.ylabel("Production (kWh)")
-    plt.title(f"Hourly Production by Group  - {selected_month} 2021")
+    plt.title(f"Hourly Production by Group in {selected_area} - {selected_month} 2021")
     plt.legend()
     plt.xticks(rotation=45)
     plt.grid()
 
     st.pyplot(plt)
-    
+
+
+with st.expander("Data Source"):
+    st.markdown("""
+    The data shown on this page comes from **Elhub's Energy Data API** (https://api.elhub.no/), 
+    which provides hourly production data for different energy groups across Norwegian price areas.  
+
+    For more details, visit [Elhub API Services](https://api.elhub.no/).
+    """)
+
