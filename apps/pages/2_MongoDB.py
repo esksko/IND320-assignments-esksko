@@ -40,11 +40,29 @@ if "_id" in df.columns:
 # Splitting page into left and right columns
 left_column, right_column = st.columns(2)
 
+
+# Initializing session state for selections
+if "selected_area" not in st.session_state:
+    st.session_state["selected_area"] = "NO1"
+
+if "selected_group" not in st.session_state:
+    st.session_state["selected_group"] = ["hydro", "wind", "solar", "thermal", "other"]
+
+
 with left_column:
     st.subheader("Production Share by Group")
 
     price_areas = ["NO1", "NO2", "NO3", "NO4", "NO5"]
-    selected_area = st.radio("Select Price Area", price_areas)
+    selected_area = st.radio("Select Price Area", 
+                             price_areas, 
+                             key="area_radio", 
+                             index=price_areas.index(st.session_state["selected_area"])
+                             )
+    
+    # Update session state when selection changes
+    if selected_area != st.session_state["selected_area"]:
+        st.session_state["selected_area"] = selected_area
+
 
     # Filter data based on selected price area
     area_data = df[df["pricearea"] == selected_area]
@@ -65,11 +83,20 @@ with right_column:
 
     # Pills for selecting production group
     production_groups = ["hydro", "wind", "solar", "thermal", "other"]
-    selected_group = st.pills("Select Production Group", production_groups, selection_mode="multi", default=production_groups)
+    selected_group = st.pills("Select Production Group", 
+                              production_groups, 
+                              key="group_pills", 
+                              selection_mode="multi", 
+                              default=st.session_state["selected_group"]
+                              )
+    
+    # Update session state when selection changes
+    if selected_group != st.session_state["selected_group"]:
+        st.session_state["selected_group"] = selected_group
 
     # Selectbox for selecting month
     months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-    selected_month = st.selectbox("Select Month", months)
+    selected_month = st.selectbox("Select Month", months, key="selected_month")
 
     # Filtering data based on selected production group and month
     #group_data = df[df["productiongroup"].isin(selected_group)]
