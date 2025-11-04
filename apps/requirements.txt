@@ -4,4 +4,6 @@ matplotlib
 seaborn
 numpy
 pymongo
+statsmodels
+scipy
 
