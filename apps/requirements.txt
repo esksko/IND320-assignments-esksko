@@ -6,4 +6,4 @@ numpy
 pymongo
 statsmodels
 scipy
-
+scikit-learn
