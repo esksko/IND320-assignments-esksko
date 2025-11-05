@@ -1,6 +1,6 @@
 import streamlit as st
 
-st.title("Assignment 1 - Weather Dashboard")
+st.title("IND320 Assignments")
 
 # Sidebar title for naviagtion
 # Actual sidebar is handled by Streamlit and the "pages" folder
