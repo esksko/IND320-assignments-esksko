@@ -2,7 +2,7 @@ import streamlit as st
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.express as px
 
 st.set_page_config(page_title="MongoDB Page", layout="wide", initial_sidebar_state="expanded")
 
@@ -70,12 +70,14 @@ with left_column:
     production_by_group = area_data.groupby("productiongroup")["quantitykwh"].sum()
 
     # Creating pie chart
-    plt.figure(figsize=(10, 6))
-    plt.pie(production_by_group.values)
-    plt.title(f"Production Distribution by Group in {selected_area} (2021)")
-    plt.legend(production_by_group.index, title="Production Groups", loc="upper left")
+    fig_pie = px.pie(
+        names=production_by_group.index,
+        values=production_by_group.values,
+        title=f"Production Share by Group in {selected_area} (2021)",
+    )
 
-    st.pyplot(plt)
+    fig_pie.update_traces(textposition="inside", textinfo="percent+label")
+    st.plotly_chart(fig_pie, use_container_width=True)
 
 
 with right_column:
@@ -109,19 +111,32 @@ with right_column:
     # This creates a pivot table for better plotting
     pivot_data = filtered_data.pivot_table(values="quantitykwh", index="starttime", columns="productiongroup", aggfunc="sum")
 
-    # Creating line chart
-    plt.figure(figsize=(10, 6))
-    for column in pivot_data.columns:
-        plt.plot(pivot_data.index, pivot_data[column], label=column)
-    
-    plt.xlabel("Time")
-    plt.ylabel("Production (kWh)")
-    plt.title(f"Hourly Production by Group in {selected_area} - {selected_month} 2021")
-    plt.legend()
-    plt.xticks(rotation=45)
-    plt.grid()
+    # Creating line chart using Plotly
 
-    st.pyplot(plt)
+    # Convert pivot table to long format
+    plot_df = pivot_data.reset_index().melt(
+        id_vars="starttime",
+        var_name="productiongroup",
+        value_name="quantitykwh"
+    )
+
+    fig_line = px.line(
+        plot_df,
+        x="starttime",
+        y="quantitykwh",
+        color="productiongroup",
+        title=f"Hourly Production by Group in {selected_area} - {selected_month} 2021",
+    )
+
+    fig_line.update_layout(
+        xaxis_title="Time",
+        yaxis_title="Production (kWh)",
+        legend_title="Production Group",
+    )
+
+    st.plotly_chart(fig_line, use_container_width=True)
+
+
 
 
 with st.expander("Data Source"):
