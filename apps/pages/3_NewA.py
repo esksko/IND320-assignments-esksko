@@ -1,12 +1,13 @@
 import streamlit as st
 from statsmodels.tsa.seasonal import STL
 import pandas as pd
-import matplotlib.pyplot as plt
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 import tomllib
 from scipy.signal import spectrogram
 import numpy as np
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 
 st.set_page_config(page_title="MongoDB Page", layout="wide", initial_sidebar_state="expanded")
@@ -49,66 +50,75 @@ def load_mongo_data():
 
     return df
 
-
-
 # STL and Spectrogram functions
-def stl_decomposition(df, price_area="NO1", production_group="Solar", period=24, seasonal=7, trend=169, robust=True):
-    data = df[(df["pricearea"] == price_area) & (df["productiongroup"] == production_group)]
-    ts = data["quantitykwh"] 
+def stl_decomposition(df, price_area="NO1", production_group="Solar",
+                      period=24, seasonal=7, trend=169, robust=True):
+
+    data = df[(df["pricearea"] == price_area) &
+              (df["productiongroup"] == production_group)]
+
+    ts = data["quantitykwh"]
     ts.index = pd.to_datetime(data["starttime"])
-    ts.sort_index(inplace=True) # Ensure time series is sorted by datetime
+    ts = ts.sort_index()
 
     stl = STL(ts, period=period, seasonal=seasonal, trend=trend, robust=robust)
-    result = stl.fit()
-    
-    # Plot
-    fig, ax = plt.subplots(4, 1, figsize=(15, 10), sharex=False)
-    ax[0].plot(ts, label='Original')
-    ax[0].set_title(f"{production_group} Production ({price_area}) - Original")
-    ax[0].legend()
+    res = stl.fit()
 
-    ax[1].plot(result.trend, label='Trend', color='orange')
-    ax[1].set_title("Trend Component")
-    ax[1].legend()
+    fig = make_subplots(
+        rows=4, cols=1, shared_xaxes=True,
+        vertical_spacing=0.07,
+        subplot_titles=["Original", "Trend", "Seasonal", "Residual"]
+    )
 
-    ax[2].plot(result.seasonal, label='Seasonal', color='green')
-    ax[2].set_title("Seasonal Component")
-    ax[2].legend()
+    fig.add_trace(go.Scatter(x=ts.index, y=ts, name="Original"), row=1, col=1)
+    fig.add_trace(go.Scatter(x=ts.index, y=res.trend, name="Trend"), row=2, col=1)
+    fig.add_trace(go.Scatter(x=ts.index, y=res.seasonal, name="Seasonal"), row=3, col=1)
+    fig.add_trace(go.Scatter(x=ts.index, y=res.resid, name="Residual"), row=4, col=1)
 
-    ax[3].plot(result.resid, label='Residual', color='red')
-    ax[3].set_title("Residual Component")
-    ax[3].legend()
-
-    plt.tight_layout()
+    fig.update_layout(
+        height=900,
+        showlegend=False,
+        title=f"{production_group} Production ({price_area}) – STL Decomposition"
+    )
 
     return fig
 
 
-def plot_spectrogram(df, price_area="NO1", production_group="Solar", window_length=256, overlap=128):
-    data = df[(df["pricearea"] == price_area) & (df["productiongroup"] == production_group)]
-    
-    ts = data["quantitykwh"]
-    ts.index = pd.to_datetime(data["starttime"])
-    ts.sort_index(inplace=True)
+def plot_spectrogram(df, price_area="NO1", production_group="Solar",
+                     window_length=256, overlap=128):
 
-    # Compute spectrogram
+    data = df[(df["pricearea"] == price_area) &
+              (df["productiongroup"] == production_group)]
+
+    ts = data["quantitykwh"].values
+    times = pd.to_datetime(data["starttime"]).sort_values()
+
     f, t, Sxx = spectrogram(ts, nperseg=window_length, noverlap=overlap)
 
-    # Map 't' (seconds or indices) to datetime
-    # t gives the center of each segment in sample indices, convert to datetime
-    start_time = ts.index[0]
-    dt = ts.index[1] - ts.index[0]  # assuming uniform spacing
-    t_dates = [start_time + i*dt for i in t]
+    dt = times.iloc[1] - times.iloc[0]
+    t_dates = [times.iloc[0] + i * dt for i in t]
 
-    # Plotting
-    fig, ax = plt.subplots(figsize=(12, 6))
-    im = ax.pcolormesh(t_dates, f, 10 * np.log10(Sxx), shading="gouraud", cmap="viridis")
-    ax.set_ylabel("Frequency [1/hour]")
-    ax.set_xlabel("Time")
-    ax.set_title(f"Spectrogram of {production_group} Production ({price_area})")
-    fig.colorbar(im, ax=ax, label="Power [dB]")
-    plt.xticks(rotation=45)
-    plt.tight_layout()
+    z_db = 10 * np.log10(Sxx + 1e-12)
+
+    fig = go.Figure(
+        data=go.Heatmap(
+            x=t_dates,
+            y=f,
+            z=z_db,
+            colorscale="Viridis",
+            zmin=np.percentile(z_db, 1),
+            zmax=np.percentile(z_db, 99),
+            colorbar=dict(title="Power [dB]")
+
+        )
+    )
+
+    fig.update_layout(
+        title=f"Spectrogram of {production_group} Production ({price_area})",
+        xaxis_title="Time",
+        yaxis_title="Frequency [1/hour]",
+        height=600
+    )
 
     return fig
 
@@ -122,7 +132,7 @@ with tab1:
 
     fig = stl_decomposition(elhub_df, price_area=selected_area, production_group=selected_group_stl)
 
-    st.pyplot(fig)
+    st.plotly_chart(fig, use_container_width=True)
 
 
 with tab2:
@@ -132,7 +142,7 @@ with tab2:
 
     fig = plot_spectrogram(elhub_df, price_area=selected_area, production_group=selected_group_spec)
     
-    st.pyplot(fig)
+    st.plotly_chart(fig, use_container_width=True)
     
 
 
