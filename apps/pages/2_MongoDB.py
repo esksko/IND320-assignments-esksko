@@ -3,6 +3,7 @@ from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 import pandas as pd
 import plotly.express as px
+import tomllib
 
 st.set_page_config(page_title="MongoDB Page", layout="wide", initial_sidebar_state="expanded")
 
@@ -11,30 +12,26 @@ st.sidebar.title("Navigation")
 
 
 @st.cache_data(ttl=6000)
-def load_data_from_mongo():
-    password = st.secrets["MongoDB"]["pwd"]
-    cluster = st.secrets["MongoDB"]["cluster"]
-    database = st.secrets["MongoDB"]["database"]
-    collection = st.secrets["MongoDB"]["collection"]
+def load_mongo_data():
+    with open(".streamlit/secrets.toml", "rb") as f:
+        cfg = tomllib.load(f)
 
+    PWD = cfg["MongoDB"]["pwd"]
 
-    uri = f"mongodb+srv://esksko:{password}@ind320-esksko.5nbj7x0.mongodb.net/?retryWrites=true&w=majority&appName=IND320-esksko"
-    client = MongoClient(uri, server_api=ServerApi("1"))
+    uri = f"mongodb+srv://esksko:{PWD}@ind320-esksko.5nbj7x0.mongodb.net/?retryWrites=true&w=majority&appName=IND320-esksko"
 
-    # Connecting to the MongoDB database and collection
-    db = client[database]
-    col = db[collection]
+    client = MongoClient(uri, server_api=ServerApi('1'))
+    db = client["IND320_assignment_2"]
+    collection = db["production_data"]
 
-    # Loading all documents from the collection
-    data = list(col.find())
+    data = list(collection.find())
     df = pd.DataFrame(data)
+
+    # Convert time column to datetime if needed
+    if "starttime" in df.columns:
+        df["starttime"] = pd.to_datetime(df["starttime"])
+
     return df
-
-df = load_data_from_mongo()
-
-# Dropping the '_id' column if it exists
-if "_id" in df.columns:
-    df = df.drop(columns=["_id"])
 
 
 # Splitting page into left and right columns
@@ -47,6 +44,21 @@ if "selected_area" not in st.session_state:
 
 if "selected_group" not in st.session_state:
     st.session_state["selected_group"] = ["hydro", "wind", "solar", "thermal", "other"]
+
+# Checking if MongoDB data is loaded
+if "mongo_data" not in st.session_state:
+    df = load_mongo_data()
+    st.session_state["mongo_data"] = df
+    st.write("Reading new data")
+else:
+    df = st.session_state["mongo_data"]
+    st.write("Using cached data")
+
+
+# Dropping the '_id' column if it exists
+if "_id" in df.columns:
+    df = df.drop(columns=["_id"])
+
 
 
 with left_column:

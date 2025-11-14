@@ -14,19 +14,6 @@ st.set_page_config(page_title="MongoDB Page", layout="wide", initial_sidebar_sta
 
 st.title("New Page A: STL and Spectrogram")
 
-if "selected_group" not in st.session_state:
-    st.session_state["selected_group"] = ["hydro", "wind", "solar", "thermal", "other"]
-
-if "selected_area" not in st.session_state:
-    st.session_state["selected_area"] = "NO1"
-
-
-tab1, tab2 = st.tabs(["STL Analysis", "Spectrogram"])
-
-selected_area = st.session_state.get("selected_area", "NO1")
-selected_groups = st.session_state.get("selected_group", ["hydro", "wind", "solar", "thermal", "other"])
-
-
 
 @st.cache_data(ttl=6000)
 def load_mongo_data():
@@ -49,6 +36,29 @@ def load_mongo_data():
         df["starttime"] = pd.to_datetime(df["starttime"])
 
     return df
+
+
+if "selected_group" not in st.session_state:
+    st.session_state["selected_group"] = ["hydro", "wind", "solar", "thermal", "other"]
+
+if "selected_area" not in st.session_state:
+    st.session_state["selected_area"] = "NO1"
+
+# Checking if MongoDB data is loaded
+if "mongo_data" not in st.session_state:
+    df = load_mongo_data()
+    st.session_state["mongo_data"] = df
+    st.write("Reading new data")
+else:
+    df = st.session_state["mongo_data"]
+    st.write("Using cached data")
+
+
+tab1, tab2 = st.tabs(["STL Analysis", "Spectrogram"])
+
+selected_area = st.session_state.get("selected_area", "NO1")
+selected_groups = st.session_state.get("selected_group", ["hydro", "wind", "solar", "thermal", "other"])
+
 
 # STL and Spectrogram functions
 def stl_decomposition(df, price_area="NO1", production_group="Solar",
@@ -123,7 +133,7 @@ def plot_spectrogram(df, price_area="NO1", production_group="Solar",
     return fig
 
 
-elhub_df = load_mongo_data()
+elhub_df = st.session_state["mongo_data"]
 
 with tab1:
     st.header("STL Analysis")
