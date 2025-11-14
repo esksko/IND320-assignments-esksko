@@ -21,7 +21,7 @@ def load_mongo_data():
     uri = f"mongodb+srv://esksko:{PWD}@ind320-esksko.5nbj7x0.mongodb.net/?retryWrites=true&w=majority&appName=IND320-esksko"
 
     client = MongoClient(uri, server_api=ServerApi('1'))
-    db = client["IND320_assignment_2"]
+    db = client["IND320_assignment_4"]
     collection = db["production_data"]
 
     data = list(collection.find())
@@ -77,7 +77,7 @@ with left_column:
 
 
     # Filter data based on selected price area
-    area_data = df[df["pricearea"] == selected_area]
+    area_data = df[(df["pricearea"] == selected_area) & (df["starttime"].dt.year == 2021)]
 
     production_by_group = area_data.groupby("productiongroup")["quantitykwh"].sum()
 
@@ -115,6 +115,7 @@ with right_column:
     # Filtering data based on selected production group and month
     #group_data = df[df["productiongroup"].isin(selected_group)]
     filtered_data = df[
+        (df["starttime"].dt.year == 2021) &
         (df["starttime"].dt.month == (months.index(selected_month) + 1)) &
         (df["pricearea"] == selected_area) &
         (df["productiongroup"].isin(selected_group))

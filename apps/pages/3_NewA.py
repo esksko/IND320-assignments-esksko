@@ -25,7 +25,7 @@ def load_mongo_data():
     uri = f"mongodb+srv://esksko:{PWD}@ind320-esksko.5nbj7x0.mongodb.net/?retryWrites=true&w=majority&appName=IND320-esksko"
 
     client = MongoClient(uri, server_api=ServerApi('1'))
-    db = client["IND320_assignment_2"]
+    db = client["IND320_assignment_4"]
     collection = db["production_data"]
 
     data = list(collection.find())
@@ -134,6 +134,7 @@ def plot_spectrogram(df, price_area="NO1", production_group="Solar",
 
 
 elhub_df = st.session_state["mongo_data"]
+elhub_df = elhub_df[elhub_df["starttime"].dt.year == 2021]
 
 with tab1:
     st.header("STL Analysis")
