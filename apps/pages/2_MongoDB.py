@@ -11,6 +11,7 @@ st.title("MongoDB integration")
 st.sidebar.title("Navigation")
 
 
+
 @st.cache_data(ttl=6000)
 def load_mongo_data():
     with open(".streamlit/secrets.toml", "rb") as f:
@@ -22,16 +23,21 @@ def load_mongo_data():
 
     client = MongoClient(uri, server_api=ServerApi('1'))
     db = client["IND320_assignment_4"]
-    collection = db["production_data"]
 
-    data = list(collection.find())
-    df = pd.DataFrame(data)
+    # Loading production data
+    prod_data = list(db["production_data"].find())
+    df_production = pd.DataFrame(prod_data)
 
-    # Convert time column to datetime if needed
-    if "starttime" in df.columns:
-        df["starttime"] = pd.to_datetime(df["starttime"])
+    # Loading consumption data
+    cons_data = list(db["consumption_data"].find())
+    df_consumption = pd.DataFrame(cons_data)
 
-    return df
+    # Convert timestamps
+    for df in (df_production, df_consumption):
+        if "starttime" in df.columns:
+            df["starttime"] = pd.to_datetime(df["starttime"])
+
+    return df_production, df_consumption
 
 
 # Splitting page into left and right columns
@@ -45,19 +51,20 @@ if "selected_area" not in st.session_state:
 if "selected_group" not in st.session_state:
     st.session_state["selected_group"] = ["hydro", "wind", "solar", "thermal", "other"]
 
+
 # Checking if MongoDB data is loaded
 if "mongo_data" not in st.session_state:
-    df = load_mongo_data()
-    st.session_state["mongo_data"] = df
+    df_production, df_consumption = load_mongo_data()
+    st.session_state["mongo_data"] = df_production, df_consumption
     st.write("Reading new data")
 else:
-    df = st.session_state["mongo_data"]
+    df_production, df_consumption = st.session_state["mongo_data"]
     st.write("Using cached data")
 
 
 # Dropping the '_id' column if it exists
-if "_id" in df.columns:
-    df = df.drop(columns=["_id"])
+if "_id" in df_production.columns:
+    df_production = df_production.drop(columns=["_id"])
 
 
 
@@ -77,7 +84,7 @@ with left_column:
 
 
     # Filter data based on selected price area
-    area_data = df[(df["pricearea"] == selected_area) & (df["starttime"].dt.year == 2021)]
+    area_data = df_production[(df_production["pricearea"] == selected_area) & (df_production["starttime"].dt.year == 2021)]
 
     production_by_group = area_data.groupby("productiongroup")["quantitykwh"].sum()
 
@@ -114,11 +121,11 @@ with right_column:
 
     # Filtering data based on selected production group and month
     #group_data = df[df["productiongroup"].isin(selected_group)]
-    filtered_data = df[
-        (df["starttime"].dt.year == 2021) &
-        (df["starttime"].dt.month == (months.index(selected_month) + 1)) &
-        (df["pricearea"] == selected_area) &
-        (df["productiongroup"].isin(selected_group))
+    filtered_data = df_production[
+        (df_production["starttime"].dt.year == 2021) &
+        (df_production["starttime"].dt.month == (months.index(selected_month) + 1)) &
+        (df_production["pricearea"] == selected_area) &
+        (df_production["productiongroup"].isin(selected_group))
         ]
    
     # This creates a pivot table for better plotting

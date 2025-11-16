@@ -26,16 +26,22 @@ def load_mongo_data():
 
     client = MongoClient(uri, server_api=ServerApi('1'))
     db = client["IND320_assignment_4"]
-    collection = db["production_data"]
 
-    data = list(collection.find())
-    df = pd.DataFrame(data)
+    # Loading production data
+    prod_data = list(db["production_data"].find())
+    df_production = pd.DataFrame(prod_data)
 
-    # Convert time column to datetime if needed
-    if "starttime" in df.columns:
-        df["starttime"] = pd.to_datetime(df["starttime"])
+    # Loading consumption data
+    cons_data = list(db["consumption_data"].find())
+    df_consumption = pd.DataFrame(cons_data)
 
-    return df
+    # Convert timestamps
+    for df in (df_production, df_consumption):
+        if "starttime" in df.columns:
+            df["starttime"] = pd.to_datetime(df["starttime"])
+
+    return df_production, df_consumption
+
 
 
 if "selected_group" not in st.session_state:
@@ -46,11 +52,11 @@ if "selected_area" not in st.session_state:
 
 # Checking if MongoDB data is loaded
 if "mongo_data" not in st.session_state:
-    df = load_mongo_data()
-    st.session_state["mongo_data"] = df
+    df_production, df_consumption = load_mongo_data()
+    st.session_state["mongo_data"] = df_production, df_consumption
     st.write("Reading new data")
 else:
-    df = st.session_state["mongo_data"]
+    df_production, df_consumption = st.session_state["mongo_data"]
     st.write("Using cached data")
 
 
@@ -133,7 +139,7 @@ def plot_spectrogram(df, price_area="NO1", production_group="Solar",
     return fig
 
 
-elhub_df = st.session_state["mongo_data"]
+elhub_df, df_consumption = st.session_state["mongo_data"]
 elhub_df = elhub_df[elhub_df["starttime"].dt.year == 2021]
 
 with tab1:
