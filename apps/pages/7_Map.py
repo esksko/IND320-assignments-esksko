@@ -128,4 +128,7 @@ map_output = st_folium(m, height=600, width=900)
 if map_output and "last_clicked" in map_output and map_output["last_clicked"]:
     lat = map_output["last_clicked"]["lat"]
     lon = map_output["last_clicked"]["lng"]
+
+    st.session_state["clicked_coord"] = (lat, lon)
+
     st.success(f"Clicked at: {lat:.5f}, {lon:.5f}")
