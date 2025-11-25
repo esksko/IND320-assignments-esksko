@@ -122,8 +122,10 @@ folium.GeoJson(
 # Enable clicking to drop a pin
 m.add_child(folium.LatLngPopup())
 
+
 # Render map
-map_output = st_folium(m, height=600, width=900)
+
+map_output = st_folium(m, height=900, width=None)
 
 # Show clicked coordinates
 if map_output and "last_clicked" in map_output and map_output["last_clicked"]:
