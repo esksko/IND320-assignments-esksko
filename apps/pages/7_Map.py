@@ -7,6 +7,7 @@ import tomllib
 import pandas as pd
 import folium
 from streamlit_folium import st_folium
+import requests
 
 
 st.set_page_config(page_title="Map and selectors", layout="wide", initial_sidebar_state="expanded")
@@ -131,4 +132,17 @@ if map_output and "last_clicked" in map_output and map_output["last_clicked"]:
 
     st.session_state["clicked_coord"] = (lat, lon)
 
-    st.success(f"Clicked at: {lat:.5f}, {lon:.5f}")
+    
+    # Fetch elevation data
+    elev_url = f"https://api.open-meteo.com/v1/elevation?latitude={lat}&longitude={lon}"
+
+    try:
+        elev_response = requests.get(elev_url)
+        elev_response.raise_for_status()
+
+        if "elevation" in elev_response.json():
+            elevation = elev_response.json()["elevation"]
+            st.success(f"Clicked at: {lat:.5f}, {lon:.5f}, Elevation: {elevation} meters")
+    
+    except Exception as e:
+        st.error(f"Failed to fetch elevation data: {e}")

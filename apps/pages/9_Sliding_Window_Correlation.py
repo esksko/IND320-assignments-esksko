@@ -98,20 +98,34 @@ st.subheader("Settings")
 
 lat, lon = st.session_state["clicked_coord"]
 
-selected_year = st.selectbox("Year", list(range(2021, 2025)), index=0)
-selected_pricearea = st.selectbox("Price Area", ["NO1", "NO2", "NO3", "NO4", "NO5"], index=0)
 
-met_var = st.selectbox(
-    "Select meteorological variable for correlation:",
-    ["temperature_2m", "precipitation", "wind_speed_10m", 
-     "wind_gusts_10m", "wind_direction_10m"])
 
-energy_var = st.selectbox("Select energy variable for correlation:",
-                          ["production", "consumption"])
 
-window = st.slider("Select sliding window size (hours):", 24, 720, 168)
-lag = st.slider("Lag (hours)", -168, 168, 0)
-center = st.slider("Center index for highlighting:", 0, 8760, 4380)
+
+c1, c2 = st.columns(2)
+
+
+# Selectors
+with c1:
+    selected_year = st.radio("Year", [2021, 2022, 2023, 2024], index=0, horizontal=True)
+    selected_pricearea = st.radio("Price Area", ["NO1", "NO2", "NO3", "NO4", "NO5"], index=0, horizontal=True)
+    energy_var = st.radio("Energy Variable", ["production", "consumption"], index=0, horizontal=True)
+    
+    met_var = st.selectbox(
+        "Select meteorological variable for correlation:",
+        ["temperature_2m", "precipitation", "wind_speed_10m", 
+        "wind_gusts_10m", "wind_direction_10m"])
+    
+    
+    
+with c2:
+    window = st.slider("Select sliding window size (hours):", 24, 720, 168)
+    lag = st.slider("Lag (hours)", -168, 168, 0)
+    center = st.slider("Center index for highlighting:", 0, 8760, 4380)
+
+
+
+
 
 # Getting data into dataframes and merging
 df_meteorological = load_data_from_api(lat, lon, selected_year, variables=[met_var])
@@ -155,8 +169,24 @@ def plotly_lagged_correlation(df, lag=0, window=45, center=200):
     swc = energy.rolling(window, center=True).corr(meteo_lagged)
 
     # Plotting
-    fig = make_subplots(rows=3, cols=1, shared_xaxes=False)
-    fig.update_layout(height=1700, title_text="Lagged Sliding Window Correlation")
+    fig = make_subplots(
+        rows=3, 
+        cols=1, 
+        shared_xaxes=False,
+        subplot_titles=(
+            f"{met_var} (lagged by {lag} hours)",
+            f"{energy_var} (kWh)",
+            "Sliding Window Correlation")
+        )
+
+    fig.update_layout(
+        height=1700, 
+        title_text="Lagged Sliding Window Correlation",
+        showlegend=False,
+        )
+    
+    for r in range(1, 4):
+        fig.update_xaxes(title_text="Hours", row=r, col=1)
 
     # Meteorology plot
     fig.add_trace(
@@ -164,7 +194,7 @@ def plotly_lagged_correlation(df, lag=0, window=45, center=200):
             x=list(range(len(meteo))),
             y=meteo,
             mode="lines",
-            name=f"{met_var} (lag={lag})"
+            name=f"{met_var} (lag={lag})",
         ),
         row=1, col=1
     )
