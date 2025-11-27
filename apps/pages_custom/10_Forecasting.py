@@ -15,6 +15,8 @@ st.set_page_config(page_title="Forecasting of energy production and consumption"
 
 st.title("Forecasting of energy production and consumption")
 
+if "selected_area" not in st.session_state:
+    st.session_state["selected_area"] = "NO1"
 
 # Data loading functions
 @st.cache_data(ttl=6000)
@@ -64,7 +66,13 @@ with c1:
     dataset = st.radio("Select Energy Dataset", ("production", "consumption"), horizontal=True)
     df_energy = df_production if dataset == "production" else df_consumption
 
-    pricearea = st.radio("Select Price Area", ["NO1", "NO2", "NO3", "NO4", "NO5"], horizontal=True)
+    price_areas = ["NO1", "NO2", "NO3", "NO4", "NO5"]
+    selected_area = st.radio("Select Price Area", 
+                             price_areas,
+                             index=price_areas.index(st.session_state["selected_area"])
+                             )
+    
+    st.session_state["selected_area"] = selected_area
 
     if dataset == "production":
         energy_group = st.selectbox("Select Production Type", ["hydro", "wind", "solar", "thermal", "other"])
@@ -101,35 +109,42 @@ with c4:
     s = st.number_input("Seasonal period (s)", 1, 8760, 24)
 
 # Choosing exogenous variables
+# Choosing exogenous variables
 exog_list = []
 try:
-    # pivot to wide columns like "group_pricearea" so we can present the simultaneous categories
+    # pivot to wide columns like "group_pricearea"
     if dataset == "production":
         pivot = (
             df_energy
             .reset_index()
-            .pivot_table(index="starttime", columns=["productiongroup", "pricearea"], values="quantitykwh", aggfunc="mean")
+            .pivot_table(index="starttime", columns=["productiongroup", "pricearea"],
+                         values="quantitykwh", aggfunc="mean")
         )
-        cols = [f"{grp}_{area}" for grp, area in pivot.columns]
-    elif dataset == "consumption":
+    else:
         pivot = (
             df_energy
             .reset_index()
-            .pivot_table(index="starttime", columns=["consumptiongroup", "pricearea"], values="quantitykwh", aggfunc="mean")
+            .pivot_table(index="starttime", columns=["consumptiongroup", "pricearea"],
+                         values="quantitykwh", aggfunc="mean")
         )
-        cols = [f"{grp}_{area}" for grp, area in pivot.columns]
-    else:
-        cols = []
 
-    target_col = f"{energy_group}_{pricearea}"
-    # sensible candidates:
-    other_groups_same_area = [c for c in cols if c.endswith(f"_{pricearea}") and c != target_col]
-    same_group_other_areas = [c for c in cols if c.startswith(f"{energy_group}_") and not c.endswith(f"_{pricearea}")]
-    # combine into a short list (prioritize same-area, then same-group-other-area)
+    cols = [f"{grp}_{area}" for grp, area in pivot.columns]
+
+    target_col = f"{energy_group}_{selected_area}"
+
+    other_groups_same_area = [
+        c for c in cols if c.endswith(f"_{selected_area}") and c != target_col
+    ]
+
+    same_group_other_areas = [
+        c for c in cols if c.startswith(f"{energy_group}_") and not c.endswith(f"_{selected_area}")
+    ]
+
     exog_list = other_groups_same_area + same_group_other_areas
+
 except Exception:
-    # if pivoting fails for any reason, fall back to empty list (UI will still work)
     exog_list = []
+
 
 exog_vars = st.multiselect("Exogenous variables (simultaneous categories)", exog_list)
 
@@ -162,7 +177,7 @@ if run_model:
     df_wide = df_wide.ffill().interpolate(limit=24)
 
     # Define target column and check it exists
-    target_col = f"{energy_group}_{pricearea}"
+    target_col = f"{energy_group}_{selected_area}"
     if target_col not in df_wide.columns:
         st.error(f"Target column {target_col} not found in data.")
         st.stop()

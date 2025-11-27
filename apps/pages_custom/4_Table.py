@@ -21,11 +21,12 @@ area_coords = {
     "NO5": (60.39, 5.32)    # Bergen
 }
 
-selected_area = st.session_state.get("selected_area")
-
-
-# Display current selections
-st.info(f"Selected Area: {selected_area}")
+price_areas = ["NO1", "NO2", "NO3", "NO4", "NO5"]
+selected_area = st.radio("Select Price Area", 
+                         price_areas,
+                         index=price_areas.index(st.session_state["selected_area"])
+                         )
+st.session_state["selected_area"] = selected_area
 
 lat, lon = area_coords[selected_area]
 selected_year = 2021

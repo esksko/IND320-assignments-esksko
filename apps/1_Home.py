@@ -21,14 +21,16 @@ Map = st.Page("pages_custom/7_Map.py", title="Weather Map", icon="🗺️")
 Snow_Drift = st.Page("pages_custom/8_Snow_drift.py", title="Snow Drift Analysis", icon="❄️")
 Sliding_Window_Correlation = st.Page("pages_custom/9_Sliding_window_correlation.py", title="Sliding Window Correlation", icon="🔄")
 Forecasting = st.Page("pages_custom/10_Forecasting.py", title="Weather Forecasting", icon="🌦️")
-
+Test_1 = st.Page("pages_custom/Test_1.py", title="Test Page 1", icon="🧪")
+Test_2 = st.Page("pages_custom/Test_2.py", title="Test Page 2", icon="🧫")
 
 
 # Create navigation with sections using a dictionary
 pages = {
     "Homepage": [Homepage ],
     "Weather": [Table, Plot, NewB, Snow_Drift],
-    "Energy": [MongoDB, NewA, Map, Sliding_Window_Correlation, Forecasting]
+    "Energy": [MongoDB, NewA, Map, Sliding_Window_Correlation, Forecasting],
+    "Testing": [Test_1, Test_2]
 }
 
 pg = st.navigation(pages)

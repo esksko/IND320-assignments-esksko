@@ -14,6 +14,8 @@ st.set_page_config(page_title="MongoDB Page", layout="wide", initial_sidebar_sta
 
 st.title("New Page A: STL and Spectrogram")
 
+if "selected_area" not in st.session_state:
+    st.session_state["selected_area"] = "NO1"
 
 @st.cache_data(ttl=6000)
 def load_mongo_data():
@@ -43,13 +45,6 @@ def load_mongo_data():
     return df_production, df_consumption
 
 
-
-if "selected_group" not in st.session_state:
-    st.session_state["selected_group"] = ["hydro", "wind", "solar", "thermal", "other"]
-
-if "selected_area" not in st.session_state:
-    st.session_state["selected_area"] = "NO1"
-
 # Checking if MongoDB data is loaded
 if "mongo_data" not in st.session_state:
     df_production, df_consumption = load_mongo_data()
@@ -60,10 +55,26 @@ else:
     st.write("Using cached data")
 
 
+price_areas = ["NO1", "NO2", "NO3", "NO4", "NO5"]
+selected_area = st.radio("Select Price Area", 
+                         price_areas,
+                         index=price_areas.index(st.session_state["selected_area"]),
+                         horizontal=True
+                         )
+            
+st.session_state["selected_area"] = selected_area
+
+
+production_groups = ["hydro", "wind", "solar", "thermal", "other"]
+selected_group = st.radio("Select Production Group for Analysis", 
+                              production_groups,
+                              horizontal=True)
+
+
+
 tab1, tab2 = st.tabs(["STL Analysis", "Spectrogram"])
 
-selected_area = st.session_state.get("selected_area", "NO1")
-selected_groups = st.session_state.get("selected_group", ["hydro", "wind", "solar", "thermal", "other"])
+
 
 
 # STL and Spectrogram functions
@@ -142,12 +153,12 @@ def plot_spectrogram(df, price_area="NO1", production_group="Solar",
 elhub_df, df_consumption = st.session_state["mongo_data"]
 elhub_df = elhub_df[elhub_df["starttime"].dt.year == 2021]
 
+
 with tab1:
     st.header("STL Analysis")
+    
 
-    selected_group_stl = st.radio("Select Production Group for Analysis", st.session_state["selected_group"])
-
-    fig = stl_decomposition(elhub_df, price_area=selected_area, production_group=selected_group_stl)
+    fig = stl_decomposition(elhub_df, price_area=selected_area, production_group=selected_group)
 
     st.plotly_chart(fig, use_container_width=True)
 
@@ -155,9 +166,7 @@ with tab1:
 with tab2:
     st.header("Spectrogram Analysis")
 
-    selected_group_spec = st.radio("Select Production Group for Spectrogram", st.session_state["selected_group"])
-
-    fig = plot_spectrogram(elhub_df, price_area=selected_area, production_group=selected_group_spec)
+    fig = plot_spectrogram(elhub_df, price_area=selected_area, production_group=selected_group)
     
     st.plotly_chart(fig, use_container_width=True)
     

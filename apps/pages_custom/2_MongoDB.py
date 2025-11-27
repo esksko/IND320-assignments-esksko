@@ -72,14 +72,11 @@ with left_column:
 
     price_areas = ["NO1", "NO2", "NO3", "NO4", "NO5"]
     selected_area = st.radio("Select Price Area", 
-                             price_areas, 
-                             key="area_radio", 
+                             price_areas,
                              index=price_areas.index(st.session_state["selected_area"])
                              )
     
-    # Update session state when selection changes
-    if selected_area != st.session_state["selected_area"]:
-        st.session_state["selected_area"] = selected_area
+    st.session_state["selected_area"] = selected_area
 
 
     # Filter data based on selected price area

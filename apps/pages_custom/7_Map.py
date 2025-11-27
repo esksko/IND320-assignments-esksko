@@ -61,6 +61,9 @@ else:
     df_production, df_consumption = st.session_state["mongo_data"]
     st.write("Using cached data")
 
+if "selected_area" not in st.session_state:
+    st.session_state["selected_area"] = "NO1"
+
 
 c1, c2 = st.columns([1, 1])
 
@@ -72,8 +75,14 @@ with c2:
 
 c3, c4 = st.columns([1, 1])
 
+price_areas = ["NO1", "NO2", "NO3", "NO4", "NO5"]
+
 with c3:
-    selected_area = st.radio("Highlighted Area", ["NO1", "NO2", "NO3", "NO4", "NO5"], index=0, horizontal=True)
+    selected_area = st.radio("Highlighted Area", 
+                             price_areas, 
+                             index=price_areas.index(st.session_state["selected_area"]), 
+                             horizontal=True)
+    st.session_state["selected_area"] = selected_area
 
 with c4:
     selected_group = st.radio("Choose Production or Consumption group", ["Production", "Consumption"], index=0, horizontal=True)
