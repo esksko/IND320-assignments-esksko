@@ -268,7 +268,7 @@ def plot_all(data, start, end):
 st.set_page_config(page_title="Plots", layout="wide")
 
 st.title("Plots")
-st.sidebar.title("Navigation")
+
 
 columns = ["All"] + [col for col in data.columns if col != "time"]
 

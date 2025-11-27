@@ -5,7 +5,7 @@ import requests
 st.set_page_config(page_title="MongoDB Page", layout="wide", initial_sidebar_state="expanded")
 
 st.title("Table")
-st.sidebar.title("Navigation")
+
 
 
 # Initialize session state with defaults if not set
