@@ -1,16 +1,17 @@
 import streamlit as st
 
+
+# Setting browser tab title
+st.set_page_config(page_title="Weather Dashboard", layout="wide", initial_sidebar_state="expanded")
+
 st.title("IND320 Assignments")
 
 # Sidebar title for naviagtion
 # Actual sidebar is handled by Streamlit and the "pages" folder
 st.sidebar.title("Navigation")
 
-# Setting browser tab title
-st.set_page_config(page_title="Weather Dashboard", layout="wide", initial_sidebar_state="expanded")
-
-
 # Define your pages with groups
+Homepage = st.Page("pages_custom/Homepage.py", title="Homepage", icon="🏠")
 MongoDB = st.Page("pages_custom/2_MongoDB.py", title="MongoDB Integration", icon="🗄️")
 NewA = st.Page("pages_custom/3_NewA.py", title="STL and Spectrogram", icon="📊")
 Table = st.Page("pages_custom/4_Table.py", title="Data Table", icon="📋")
@@ -25,6 +26,7 @@ Forecasting = st.Page("pages_custom/10_Forecasting.py", title="Weather Forecasti
 
 # Create navigation with sections using a dictionary
 pages = {
+    "Homepage": [Homepage ],
     "Weather": [Table, Plot, NewB, Snow_Drift],
     "Energy": [MongoDB, NewA, Map, Sliding_Window_Correlation, Forecasting]
 }

@@ -12,10 +12,6 @@ st.title("Table")
 if "selected_area" not in st.session_state:
     st.session_state["selected_area"] = "NO1"
 
-if "selected_group" not in st.session_state:
-    st.session_state["selected_group"] = ["hydro", "wind", "solar", "thermal", "other"]
-
-
 # Map price areas to coordinates
 area_coords = {
     "NO1": (59.91, 10.75),  # Oslo
@@ -25,11 +21,11 @@ area_coords = {
     "NO5": (60.39, 5.32)    # Bergen
 }
 
-selected_area = st.session_state.get("selected_area", "NO1")
-selected_group = st.session_state.get("selected_group", ["hydro", "wind", "solar", "thermal", "other"])
+selected_area = st.session_state.get("selected_area")
+
 
 # Display current selections
-st.info(f"Selected Area: {selected_area}, Selected Groups: {', '.join(selected_group)}")
+st.info(f"Selected Area: {selected_area}")
 
 lat, lon = area_coords[selected_area]
 selected_year = 2021
@@ -64,11 +60,9 @@ def load_data_from_api(lat, lon, year, variables=["temperature_2m", "precipitati
 
     
 
-if "weather_data" not in st.session_state:
-    st.session_state["weather_data"] = load_data_from_api(lat, lon, selected_year, variables=["temperature_2m", "precipitation", "wind_speed_10m", "wind_gusts_10m", "wind_direction_10m"])
 
 # Load data
-data = st.session_state["weather_data"]
+data = load_data_from_api(lat, lon, selected_year, variables=["temperature_2m", "precipitation", "wind_speed_10m", "wind_gusts_10m", "wind_direction_10m"])
 
 # Filter first month (January)
 first_month = data[data["time"].dt.month == 1]

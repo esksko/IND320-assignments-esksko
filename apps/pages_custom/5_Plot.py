@@ -4,6 +4,8 @@ import numpy as np
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 
+st.set_page_config(page_title="Plots", layout="wide")
+
 # Load weather dataset
 @st.cache_data
 def load_data():
@@ -264,8 +266,6 @@ def plot_all(data, start, end):
 
 
 # Streamlit UI
-
-st.set_page_config(page_title="Plots", layout="wide")
 
 st.title("Plots")
 
