@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-
+import matplotlib.pyplot as plt
 
 # Load weather dataset
 @st.cache_data
@@ -108,8 +108,8 @@ def plot_single_column(column, df):
 
 # Plot all variables together
 def plot_all(data, start, end):
-    import matplotlib.pyplot as plt
 
+    # Aggregate monthly data
     monthly_data = (
         data.groupby(data["time"].dt.month)
         .agg({
@@ -130,36 +130,134 @@ def plot_all(data, start, end):
         (monthly_data["month_num"] >= start) & (monthly_data["month_num"] <= end)
     ]
 
-    x = np.arange(len(monthly_data["month"]))
+    month_labels = monthly_data["month"].tolist()
+    x = np.arange(len(month_labels))
     bar_width = 0.3
 
-    fig, (ax1_precip, ax2) = plt.subplots(1, 2, figsize=(24, 8),
-                                          gridspec_kw={"width_ratios": [3, 1]})
+   
+    fig = go.Figure()
 
-    ax1_wind = ax1_precip.twinx()
-    ax1_temp = ax1_precip.twinx()
+    # Traces
+    # y1 - Precipitation
+    fig.add_trace(
+        go.Bar(
+            x=x - bar_width,
+            y=monthly_data["precipitation (mm)"],
+            name="Precipitation (mm)",
+            marker_color="#01386a",
+            width=bar_width  
+        )
+    )
 
-    ax1_precip.bar(x - bar_width,
-                   monthly_data["precipitation (mm)"], width=bar_width,
-                   color="#01386a", label="Precipitation")
+    # y2 - Wind gusts
+    fig.add_trace(
+        go.Bar(
+            x=x,
+            y=monthly_data["wind_gusts_10m (m/s)"],
+            name="Wind Gusts (m/s)",
+            marker_color="#7af9ab",
+            yaxis="y2",
+            width=bar_width  
+        )
+    )
 
-    ax1_wind.bar(x,
-                 monthly_data["wind_gusts_10m (m/s)"], width=bar_width,
-                 color="#7af9ab", label="Wind Gusts")
+    # y2 - Wind speed 
+    fig.add_trace(
+        go.Bar(
+            x=x + bar_width,
+            y=monthly_data["wind_speed_10m (m/s)"],
+            name="Wind Speed (m/s)",
+            marker_color="#75bbfd",
+            yaxis="y2",
+            width=bar_width  
+        )
+    )
 
-    ax1_wind.bar(x + bar_width,
-                 monthly_data["wind_speed_10m (m/s)"], width=bar_width,
-                 color="#75bbfd", label="Wind Speed")
+    # y3 - Temperature line plot
+    fig.add_trace(
+        go.Scatter(
+            x=x,
+            y=monthly_data["temperature_2m (°C)"],
+            mode="lines+markers+text",
+            text=[f"{t:.1f} °C" for t in monthly_data["temperature_2m (°C)"]],
+            textfont=dict(color="red"),
+            textposition="top center", 
+            marker=dict(color="red", size=8),
+            line=dict(color="red", width=2),
+            name="Temperature (°C)",
+            yaxis="y3"
+        )
+    )
 
-    ax1_temp.plot(x, monthly_data["temperature_2m (°C)"],
-                  color="red", marker="o", label="Temperature")
+    # Polar subplot
+    fig.add_trace(
+        go.Barpolar(
+            theta=data["wind_direction_10m (°)"],
+            r=np.ones(len(data)),
+            marker_color="#fe4b03",
+            opacity=0.75,
+            name="Wind Direction",
+            subplot="polar"
+        )
+    )
 
-    ax1_precip.set_xticks(x)
-    ax1_precip.set_xticklabels(monthly_data["month"])
+    # Layout
+    fig.update_layout(
+        xaxis=dict(
+            tickmode="array",
+            tickvals=x,
+            ticktext=month_labels,
+            title="Month",
+            domain=[0, 0.65]
+        ),
+        
+        # y1 - Precipitation (left)
+        yaxis=dict(
+            title="Precipitation (mm)",
+            range=[0, monthly_data["precipitation (mm)"].max() * 1.2]
+        ),
 
-    angles = np.deg2rad(data["wind_direction_10m (°)"])
-    ax2 = plt.subplot(122, polar=True)
-    ax2.hist(angles, bins=36, color="#fe4b03", alpha=0.75)
+        # y2 - Wind Speed & Gusts (center)
+        yaxis2=dict(
+            title="Wind Speed (m/s)",
+            overlaying="y",
+            side="right",
+            range=[0, max(monthly_data["wind_gusts_10m (m/s)"].max(), 
+                         monthly_data["wind_speed_10m (m/s)"].max()) * 1.2],
+            anchor="x"
+        ),
+
+        # y3 - Temperature (right)
+        yaxis3=dict(
+            title=dict(
+                text="Temperature (°C)",
+                font=dict(color="red")
+            ),
+            tickfont=dict(color="red"),
+            overlaying="y",
+            side="right",
+            anchor="free",
+            position=0.68,
+            range=[monthly_data["temperature_2m (°C)"].min() - 2,
+                   monthly_data["temperature_2m (°C)"].max() + 5],
+            showgrid=False
+        ),
+
+        # Polar subplot
+        polar=dict(
+            domain=dict(x=[0.75, 1.0], y=[0, 1]),
+            angularaxis=dict(
+                direction="clockwise",
+                rotation=90
+            )
+        ),
+
+        width=1300,
+        height=600,
+        bargap=0.1,
+        legend=dict(x=0.01, y=0.99),
+        showlegend=True
+    )
 
     return fig
 
@@ -188,7 +286,7 @@ filtered_data = data[
 if selected_column == "All":
     # Keep original matplotlib multi-plot for "All"
     fig = plot_all(filtered_data, selected_months[0], selected_months[1])
-    st.pyplot(fig)
+    st.plotly_chart(fig, use_container_width=True)
 
 else:
     # Plotly single-variable hourly line chart
