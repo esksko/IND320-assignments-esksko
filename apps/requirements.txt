@@ -7,3 +7,5 @@ pymongo
 statsmodels
 scipy
 scikit-learn
+Plotly
+
