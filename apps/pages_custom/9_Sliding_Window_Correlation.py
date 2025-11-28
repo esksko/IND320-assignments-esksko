@@ -93,12 +93,27 @@ c1, c2 = st.columns(2)
 with c1:
     selected_year = st.radio("Year", [2021, 2022, 2023, 2024],
                              index=0, horizontal=True)
+    
+    month_names = {
+    1: "January", 2: "February", 3: "March", 4: "April",
+    5: "May", 6: "June", 7: "July", 8: "August",
+    9: "September", 10: "October", 11: "November", 12: "December"
+    }
+
+    selected_month = st.selectbox(
+        "Select Month",
+        options=list(month_names.keys()),
+        format_func=lambda x: month_names[x]
+    )
+
+
 
     price_areas = ["NO1", "NO2", "NO3", "NO4", "NO5"]
     selected_area = st.radio(
         "Select Price Area",
         price_areas,
-        index=price_areas.index(st.session_state["selected_area"])
+        horizontal=True,
+        index=price_areas.index(st.session_state["selected_area"],)
     )
     st.session_state["selected_area"] = selected_area
 
@@ -116,7 +131,6 @@ with c1:
 with c2:
     window = st.slider("Sliding Window Size (hours)", 24, 720, 168)
     lag = st.slider("Lag (hours)", -168, 168, 0)
-    center = st.slider("Center Index Highlight", 0, 8760, 4380)
 
 
 # ---------------------------------------------------------------------
@@ -139,29 +153,63 @@ df_energy.rename(columns={"starttime": "time"}, inplace=True)
 # ---------------------------------------------------------------------
 # MERGE WEATHER + ENERGY
 # ---------------------------------------------------------------------
-df_merged = pd.merge(df_weather[["time", "meteo"]],
-                     df_energy[["time", "quantitykwh"]],
-                     on="time",
-                     how="inner")
+df_merged = pd.merge(
+    df_weather[["time", "meteo"]],
+    df_energy[["time", "quantitykwh"]],
+    on="time",
+    how="inner"
+)
+
+# Filter month
+df_merged = df_merged[df_merged["time"].dt.month == selected_month]
+df_merged = df_merged.sort_values("time").reset_index(drop=True)
+
 
 df_merged = df_merged.sort_values("time").reset_index(drop=True)
 
 # Apply lag
 df_merged["meteo_lagged"] = df_merged["meteo"].shift(lag)
 
+max_idx = max(0, len(df_merged) - 1)
+
+center = st.slider(
+    "Center Index Highlight",
+    0,
+    max_idx,
+    max_idx // 2 if max_idx > 0 else 0
+)
+
 
 # ---------------------------------------------------------------------
 # SLIDING WINDOW CORRELATION PLOT
 # ---------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# SLIDING WINDOW CORRELATION PLOT (UPDATED)
+# ---------------------------------------------------------------------
+
 def plot_swc(df, lag, window, center):
     energy = df["quantitykwh"]
     meteo_lagged = df["meteo_lagged"]
 
     # Rolling correlation
-    swc = energy.rolling(window, center=True).corr(meteo_lagged)
+    swc = energy.rolling(window=window, center=True).corr(meteo_lagged)
+
+    # Calculate correlation in the highlighted window
+    w_start = max(0, center - window // 2)
+    w_end = min(len(df), center + window // 2)
+
+    if w_end > w_start:
+        corr_window = np.corrcoef(
+            energy.iloc[w_start:w_end],
+            meteo_lagged.iloc[w_start:w_end]
+        )[0, 1]
+    else:
+        corr_window = np.nan
 
     fig = make_subplots(
-        rows=3, cols=1, shared_xaxes=False,
+        rows=3,
+        cols=1,
+        shared_xaxes=False,
         subplot_titles=(
             f"{met_var} (lagged {lag}h)",
             f"{energy_var} (kWh)",
@@ -169,57 +217,74 @@ def plot_swc(df, lag, window, center):
         )
     )
 
-    # Meteorology plot
-    fig.add_trace(go.Scatter(
-        x=df.index, y=df["meteo"], mode="lines"
-    ), row=1, col=1)
+    # ------------------------------------------------------
+    # 1. Meteorology plot
+    # ------------------------------------------------------
+    fig.add_trace(
+        go.Scatter(x=df["time"], y=df["meteo_lagged"], mode="lines", name="Meteo (lagged)"),
+        row=1, col=1
+    )
 
-    # Highlight segment
-    start_l = max(0, center - window//2 + lag)
-    end_l = min(len(df), center + window//2 + lag)
-    fig.add_trace(go.Scatter(
-        x=list(range(start_l, end_l)),
-        y=df["meteo"].iloc[start_l:end_l],
-        mode="lines",
-        line=dict(color="red", width=4)
-    ), row=1, col=1)
+    fig.add_trace(
+        go.Scatter(
+            x=df["time"].iloc[w_start:w_end],
+            y=df["meteo_lagged"].iloc[w_start:w_end],
+            mode="lines",
+            line=dict(color="red", width=3),
+            name="Window (Meteo)"
+        ),
+        row=1, col=1
+    )
 
-    # Energy plot
-    fig.add_trace(go.Scatter(
-        x=df.index, y=energy, mode="lines"
-    ), row=2, col=1)
+    # ------------------------------------------------------
+    # 2. Energy plot
+    # ------------------------------------------------------
+    fig.add_trace(
+        go.Scatter(x=df["time"], y=energy, mode="lines", name="Energy"),
+        row=2, col=1
+    )
 
-    start_e = max(0, center - window//2)
-    end_e = min(len(df), center + window//2)
-    fig.add_trace(go.Scatter(
-        x=list(range(start_e, end_e)),
-        y=energy.iloc[start_e:end_e],
-        mode="lines",
-        line=dict(color="red", width=4)
-    ), row=2, col=1)
+    fig.add_trace(
+        go.Scatter(
+            x=df["time"].iloc[w_start:w_end],
+            y=energy.iloc[w_start:w_end],
+            mode="lines",
+            line=dict(color="red", width=3),
+            name="Window (Energy)"
+        ),
+        row=2, col=1
+    )
 
-    # SWC plot
-    fig.add_trace(go.Scatter(
-        x=swc.index, y=swc, mode="lines"
-    ), row=3, col=1)
+    # ------------------------------------------------------
+    # 3. SWC plot
+    # ------------------------------------------------------
+    fig.add_trace(
+        go.Scatter(x=df["time"], y=swc, mode="lines", name="Rolling Corr"),
+        row=3, col=1
+    )
 
-    if 0 <= center < len(swc):
-        fig.add_trace(go.Scatter(
-            x=[center], y=[swc.iloc[center]],
-            mode="markers",
-            marker=dict(color="red", size=10)
-        ), row=3, col=1)
+    # Marker on selected center point
+    if not np.isnan(swc.iloc[center]):
+        fig.add_trace(
+            go.Scatter(
+                x=[df["time"].iloc[center]],
+                y=[swc.iloc[center]],
+                mode="markers",
+                marker=dict(color="red", size=10),
+                name="Selected Window Corr"
+            ),
+            row=3, col=1
+        )
 
-    fig.update_layout(height=1600)
+    fig.update_layout(height=1000, showlegend=False)
 
-    # Overall correlation
-    valid = ~np.isnan(meteo_lagged)
-    corr = np.corrcoef(energy[valid], meteo_lagged[valid])[0, 1]
-
-    return fig, corr
+    return fig, corr_window
 
 
-fig, corr = plot_swc(df_merged, lag, window, center)
+# Generate updated plot
+fig, corr_window = plot_swc(df_merged, lag, window, center)
 
 st.plotly_chart(fig, use_container_width=True)
-st.success(f"Correlation at lag {lag}: **{corr:.3f}**")
+
+st.info(f"**Correlation in selected window (lag = {lag}h): {corr_window:.3f}**")
+
