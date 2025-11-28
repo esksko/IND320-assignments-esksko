@@ -19,7 +19,7 @@ Plot = st.Page("pages_custom/5_Plot.py", title="Weather Plot", icon="🌤️")
 NewB = st.Page("pages_custom/6_NewB.py", title="SPC and LOF Analysis", icon="📈")
 Map = st.Page("pages_custom/7_Map.py", title="Weather Map", icon="🗺️")
 Snow_Drift = st.Page("pages_custom/8_Snow_drift.py", title="Snow Drift Analysis", icon="❄️")
-Sliding_Window_Correlation = st.Page("pages_custom/9_Sliding_Window_Correlation.py", title="Sliding Window Correlation", icon="🔄")
+#Sliding_Window_Correlation = st.Page("pages_custom/9_Sliding_Window_Correlation.py", title="Sliding Window Correlation", icon="🔄")
 Forecasting = st.Page("pages_custom/10_Forecasting.py", title="Weather Forecasting", icon="🌦️")
 
 
@@ -27,7 +27,7 @@ Forecasting = st.Page("pages_custom/10_Forecasting.py", title="Weather Forecasti
 pages = {
     "Homepage": [Homepage ],
     "Weather": [Table, Plot, NewB, Snow_Drift],
-    "Energy": [MongoDB, NewA, Map, Sliding_Window_Correlation, Forecasting],
+    "Energy": [MongoDB, NewA, Map, Forecasting],
 }
 
 
