@@ -5,16 +5,12 @@ import requests
 st.set_page_config(page_title="MongoDB Page", layout="wide", initial_sidebar_state="expanded")
 
 st.title("Table")
-st.sidebar.title("Navigation")
+
 
 
 # Initialize session state with defaults if not set
 if "selected_area" not in st.session_state:
     st.session_state["selected_area"] = "NO1"
-
-if "selected_group" not in st.session_state:
-    st.session_state["selected_group"] = ["hydro", "wind", "solar", "thermal", "other"]
-
 
 # Map price areas to coordinates
 area_coords = {
@@ -25,11 +21,12 @@ area_coords = {
     "NO5": (60.39, 5.32)    # Bergen
 }
 
-selected_area = st.session_state.get("selected_area", "NO1")
-selected_group = st.session_state.get("selected_group", ["hydro", "wind", "solar", "thermal", "other"])
-
-# Display current selections
-st.info(f"Selected Area: {selected_area}, Selected Groups: {', '.join(selected_group)}")
+price_areas = ["NO1", "NO2", "NO3", "NO4", "NO5"]
+selected_area = st.radio("Select Price Area", 
+                         price_areas,
+                         index=price_areas.index(st.session_state["selected_area"])
+                         )
+st.session_state["selected_area"] = selected_area
 
 lat, lon = area_coords[selected_area]
 selected_year = 2021
@@ -64,11 +61,9 @@ def load_data_from_api(lat, lon, year, variables=["temperature_2m", "precipitati
 
     
 
-if "weather_data" not in st.session_state:
-    st.session_state["weather_data"] = load_data_from_api(lat, lon, selected_year, variables=["temperature_2m", "precipitation", "wind_speed_10m", "wind_gusts_10m", "wind_direction_10m"])
 
 # Load data
-data = st.session_state["weather_data"]
+data = load_data_from_api(lat, lon, selected_year, variables=["temperature_2m", "precipitation", "wind_speed_10m", "wind_gusts_10m", "wind_direction_10m"])
 
 # Filter first month (January)
 first_month = data[data["time"].dt.month == 1]
