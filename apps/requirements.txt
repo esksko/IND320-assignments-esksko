@@ -4,4 +4,9 @@ matplotlib
 seaborn
 numpy
 pymongo
-
+statsmodels
+scipy
+scikit-learn
+Plotly
+folium
+streamlit-folium
