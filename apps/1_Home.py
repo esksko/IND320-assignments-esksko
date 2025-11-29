@@ -4,10 +4,8 @@ import pandas as pd
 # Setting browser tab title
 st.set_page_config(page_title="Weather Dashboard", layout="wide", initial_sidebar_state="expanded")
 
+# Sidebar title for navigation
 
-
-# Sidebar title for naviagtion
-# Actual sidebar is handled by Streamlit and the "pages" folder
 st.sidebar.title("Navigation")
 
 # Define your pages with groups
@@ -17,15 +15,15 @@ NewA = st.Page("pages_custom/3_NewA.py", title="STL and Spectrogram", icon="📊
 Table = st.Page("pages_custom/4_Table.py", title="Data Table", icon="📋")
 Plot = st.Page("pages_custom/5_Plot.py", title="Weather Plot", icon="🌤️")
 NewB = st.Page("pages_custom/6_NewB.py", title="SPC and LOF Analysis", icon="📈")
-Map = st.Page("pages_custom/7_Map.py", title="Weather Map", icon="🗺️")
+Map = st.Page("pages_custom/7_Map.py", title="Energy Map", icon="🗺️")
 Snow_Drift = st.Page("pages_custom/8_Snow_drift.py", title="Snow Drift Analysis", icon="❄️")
 Sliding_Window_Correlation = st.Page("pages_custom/9_Sliding_Window_Correlation.py", title="Sliding Window Correlation", icon="🔄")
-Forecasting = st.Page("pages_custom/10_Forecasting.py", title="Weather Forecasting", icon="🌦️")
+Forecasting = st.Page("pages_custom/10_Forecasting.py", title="Forecasting", icon="🌦️")
 
 
 # Create navigation with sections using a dictionary
 pages = {
-    "Homepage": [Homepage ],
+    "Homepage": [Homepage],
     "Weather": [Table, Plot, NewB, Snow_Drift],
     "Energy": [MongoDB, NewA, Map, Sliding_Window_Correlation, Forecasting],
 }
