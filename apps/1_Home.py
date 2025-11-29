@@ -28,7 +28,7 @@ pages = {
     "Energy": [MongoDB, NewA, Map, Sliding_Window_Correlation, Forecasting],
 }
 
-
+# Initialize navigation
 pg = st.navigation(pages)
 pg.run()
 
