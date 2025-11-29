@@ -12,7 +12,7 @@ from pymongo.server_api import ServerApi
 
 st.set_page_config(page_title="Outlier Analysis", layout="wide")
 
-st.title("New Page B: Outlier/SPC analysis and Anomaly/LOF analysis")
+st.title("Outlier/SPC analysis and Anomaly/LOF analysis")
 
 
 # Restore selected price area
@@ -66,7 +66,7 @@ def dct_highpass_filter(signal, freq_cutoff):
 
 
 def plot_spc_temperature(time, temperature, freq_cutoff=100, num_std=3):
-    """Plot SPC outlier detection with Plotly (clean modern style)."""
+    """Plot SPC outlier detection with Plotly."""
 
     # High-pass filtered DCT
     satv = dct_highpass_filter(temperature, freq_cutoff)
@@ -138,7 +138,7 @@ def plot_spc_temperature(time, temperature, freq_cutoff=100, num_std=3):
 
 
 def plot_lof(time, values, contamination=0.01, n_neighbors=20, variable_label="Value"):
-    """Plot LOF anomalies (Plotly, modern style)."""
+    """Plot LOF anomalies."""
 
     X = np.array(values).reshape(-1, 1)
     lof = LocalOutlierFactor(

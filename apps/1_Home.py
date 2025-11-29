@@ -5,7 +5,6 @@ import pandas as pd
 st.set_page_config(page_title="Weather Dashboard", layout="wide", initial_sidebar_state="expanded")
 
 # Sidebar title for navigation
-
 st.sidebar.title("Navigation")
 
 # Define your pages with groups

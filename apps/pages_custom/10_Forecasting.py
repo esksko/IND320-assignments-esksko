@@ -109,7 +109,6 @@ with c4:
     s = st.number_input("Seasonal period (s)", 1, 8760, 24)
 
 # Choosing exogenous variables
-# Choosing exogenous variables
 exog_list = []
 try:
     # pivot to wide columns like "group_pricearea"

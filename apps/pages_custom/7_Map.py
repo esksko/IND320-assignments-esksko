@@ -44,7 +44,7 @@ def load_mongo_data():
     return df_production, df_consumption
 
 
-
+# Load GeoJSON data
 with open("data/file.geojson", "r", encoding="utf-8") as f:
     geojson_data = json.load(f)
 
@@ -65,6 +65,7 @@ if "selected_area" not in st.session_state:
     st.session_state["selected_area"] = "NO1"
 
 
+# UI Elements
 c1, c2 = st.columns([1, 1])
 
 with c1:

@@ -157,7 +157,6 @@ elhub_df = elhub_df[elhub_df["starttime"].dt.year == 2021]
 with tab1:
     st.header("STL Analysis")
     
-
     fig = stl_decomposition(elhub_df, price_area=selected_area, production_group=selected_group)
 
     st.plotly_chart(fig, use_container_width=True)
